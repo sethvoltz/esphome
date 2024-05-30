@@ -4,6 +4,8 @@
 
 **One Time**
 
+Setup environment
+
 ```bash
 brew install pyenv pyenv-virtualenv
 cat <<EOF >> ~/.localrc
@@ -13,6 +15,18 @@ eval "$(pyenv virtualenv-init -)"
 EOF
 source ~/.localrc
 pyenv virtualenv 3.10.13 esphome-3.10
+```
+
+Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+Upgrade requirements
+
+```bash
+pip install --upgrade -r requirements.txt
 ```
 
 **Each Time**
