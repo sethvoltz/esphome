@@ -79,7 +79,7 @@ sensor:
 mqtt:
   broker: !secret mqtt_broker
   port: !secret mqtt_port
-  username: garden_sensors
+  username: !secret garden_sensors_mqtt_username
   password: !secret garden_sensors_mqtt_password
   birth_message:
     topic: garden-sensors/status

@@ -49,3 +49,11 @@ Sometimes the compile for ESP-IDF fails after linking. Most often this happens w
 esphome clean <config>.yaml
 esphome run <config>.yaml
 ```
+
+## Notes
+
+- Much help on the M5StickC was found [here][m5stickc-esphome]
+- The AXP192 support for the PMU in the M5StickC is provided but a custom component [from here][axp192-component]
+
+[m5stickc-esphome]: https://community.home-assistant.io/t/working-esphome-yaml-for-m5stickc/538050
+[axp192-component]: https://github.com/airy10/esphome-m5stickC
