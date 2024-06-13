@@ -7,6 +7,10 @@ substitutions:
 esphome:
   name: ${device_name}
   comment: ${device_description}
+  on_boot: 
+    then:
+      - delay: 10s
+      - script.execute: ensure_heating_mat_state
 
 esp32:
   board: m5stick-c
@@ -41,7 +45,9 @@ external_components:
 
 spi:
   clk_pin: GPIO13
-  mosi_pin: GPIO15
+  mosi_pin:
+    number: GPIO15
+    ignore_strapping_warning: true
 
 i2c:
   - id: bus_a
@@ -99,14 +105,10 @@ climate:
 
     heat_action:
       - switch.turn_on: thermostat_is_heating
-      - mqtt.publish:
-          topic: !secret seedlings_sensors_mqtt_command_topic
-          payload: !secret seedlings_sensors_mqtt_heater_on_payload
+      - script.execute: turn_on_heating_mat
     idle_action:
       - switch.turn_off: thermostat_is_heating
-      - mqtt.publish:
-          topic: !secret seedlings_sensors_mqtt_command_topic
-          payload: !secret seedlings_sensors_mqtt_heater_off_payload
+      - script.execute: turn_off_heating_mat
 
     default_preset: Home
     preset:
@@ -163,7 +165,9 @@ color:
 display:
   - platform:  st7789v
     model: TTGO TDisplay 135x240
-    cs_pin: GPIO5
+    cs_pin:
+      number: GPIO5
+      ignore_strapping_warning: true
     dc_pin: GPIO23
     reset_pin: GPIO18
     rotation: 270
@@ -181,3 +185,31 @@ display:
         it.printf(230, 50, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "A: %.1f°C", id(seedlings_air_temperature_sensor).state);
         it.printf(230, 80, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "W: %.1f°C", id(seedlings_water_temperature_sensor).state);
       }
+
+script:
+  - id: turn_on_heating_mat
+    then:
+      - mqtt.publish:
+          topic: !secret seedlings_sensors_mqtt_command_topic
+          payload: !secret seedlings_sensors_mqtt_heater_on_payload
+
+  - id: turn_off_heating_mat
+    then:
+      - mqtt.publish:
+          topic: !secret seedlings_sensors_mqtt_command_topic
+          payload: !secret seedlings_sensors_mqtt_heater_off_payload
+
+  - id: ensure_heating_mat_state
+    then:
+      - while:
+          condition:
+            - lambda: "return true;"
+          then:
+            - if:
+                condition:
+                  switch.is_on: thermostat_is_heating
+                then:
+                  - script.execute: turn_on_heating_mat
+                else:
+                  - script.execute: turn_off_heating_mat
+            - delay: 60s
