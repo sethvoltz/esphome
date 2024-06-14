@@ -73,26 +73,61 @@ sensor:
     unit_of_measurement: "°C"
 
   - platform: ads1115
+    id: garden_sensor_tank_right_depth
     multiplexer: 'A0_GND'
     gain: 2.048 # up to 2.048V
     name: "Tank Right Depth"
     # update_interval: 15s
     unit_of_measurement: "mm"
     filters:
-      # depth = ((voltage * to_mV / 120_ohm) - current_init_mA) * (range_mm / water_density / 16.0) - offset_mm
+      # depth = ((voltage * to_mV / 120_ohm) - current_init_mA) * (range_mm / water_density / 16.0)
       # offset_mm is a calibration factor based on the voltage reference from crappy power supplies
-      - lambda: return (((x * 1000.0 / 120.0) - 4.0) * (1000.0 / 1.0 / 16.0)) - 50.0;
+      - lambda: return (((x * 1000.0 / 120.0) - 4.0) * (1000.0 / 1.0 / 16.0));
+      - offset: -50.0
 
+  - platform: template
+    id: garden_sensor_tank_right_depth_percent
+    name: "Tank Right Depth (%)"
+    state_class: measurement
+    unit_of_measurement: "%"
+    lambda: |-
+      return id(garden_sensor_tank_right_depth).state;
+    filters:
+      - calibrate_linear:
+        - 50.0 -> 0.0
+        - 290.0 -> 100.0
+      - clamp:
+          min_value: 0.0
+          max_value: 100.0
+  
   - platform: ads1115
+    id: garden_sensor_tank_left_depth
     multiplexer: 'A1_GND'
     gain: 2.048 # up to 2.048V
     name: "Tank Left Depth"
     # update_interval: 15s
     unit_of_measurement: "mm"
     filters:
-      # depth = ((voltage * to_mV / 120_ohm) - current_init_mA) * (range_mm / water_density / 16.0) - offset_mm
+      # depth = ((voltage * to_mV / 120_ohm) - current_init_mA) * (range_mm / water_density / 16.0)
       # offset_mm is a calibration factor based on the voltage reference from crappy power supplies
-      - lambda: return (((x * 1000.0 / 120.0) - 4.0) * (1000.0 / 1.0 / 16.0)) - 50.0;
+      - lambda: return (((x * 1000.0 / 120.0) - 4.0) * (1000.0 / 1.0 / 16.0));
+      - offset: -50.0
+  
+  - platform: template
+    id: garden_sensor_tank_left_depth_percent
+    name: "Tank Left Depth (%)"
+    state_class: measurement
+    unit_of_measurement: "%"
+    lambda: |-
+      return id(garden_sensor_tank_left_depth).state;
+    filters:
+      - calibrate_linear:
+        - 50.0 -> 0.0
+        - 330.0 -> 100.0
+      - clamp:
+          min_value: 0.0
+          max_value: 100.0
+
 
 mqtt:
   broker: !secret mqtt_broker
