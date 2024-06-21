@@ -87,6 +87,12 @@ sensor:
     name: "Seedlings Water Temperature"
     unit_of_measurement: "°C"
 
+  - platform: dallas
+    id: seedlings_room_temperature_sensor
+    address: 0xb40307979441e928
+    name: "Seedlings Room Temperature"
+    unit_of_measurement: "°C"
+
 switch:
   - platform: template
     name: "Thermostat Is Heating"
@@ -175,15 +181,17 @@ display:
       if (id(thermostat_is_heating).state) {
         it.fill(id(bg_on));
         it.print(10, 35, id(big_font), id(color_on), TextAlign::TOP_LEFT, "ON");
-        it.printf(230, 20, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "S: %.1f°C", id(seedlings_thermostat).target_temperature);
-        it.printf(230, 50, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "A: %.1f°C", id(seedlings_air_temperature_sensor).state);
-        it.printf(230, 80, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "W: %.1f°C", id(seedlings_water_temperature_sensor).state);
+        it.printf(230, 5, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "R: %.1f°C", id(seedlings_room_temperature_sensor).state);
+        it.printf(230, 35, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "S: %.1f°C", id(seedlings_thermostat).target_temperature);
+        it.printf(230, 65, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "A: %.1f°C", id(seedlings_air_temperature_sensor).state);
+        it.printf(230, 95, id(small_font), id(color_on), TextAlign::TOP_RIGHT, "W: %.1f°C", id(seedlings_water_temperature_sensor).state);
       } else {
         it.fill(id(bg_off));
         it.print(10, 35, id(big_font), id(color_off), TextAlign::TOP_LEFT, "OFF");
-        it.printf(230, 20, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "S: %.1f°C", id(seedlings_thermostat).target_temperature);
-        it.printf(230, 50, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "A: %.1f°C", id(seedlings_air_temperature_sensor).state);
-        it.printf(230, 80, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "W: %.1f°C", id(seedlings_water_temperature_sensor).state);
+        it.printf(230, 5, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "R: %.1f°C", id(seedlings_room_temperature_sensor).state);
+        it.printf(230, 35, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "S: %.1f°C", id(seedlings_thermostat).target_temperature);
+        it.printf(230, 65, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "A: %.1f°C", id(seedlings_air_temperature_sensor).state);
+        it.printf(230, 95, id(small_font), id(color_off), TextAlign::TOP_RIGHT, "W: %.1f°C", id(seedlings_water_temperature_sensor).state);
       }
 
 script:
