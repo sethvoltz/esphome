@@ -26,6 +26,7 @@ api:
     key: !secret seedlings_sensors_api_key
 
 ota:
+  platform: esphome
   password: !secret seedlings_sensors_ota_password
 
 wifi:
@@ -55,8 +56,9 @@ i2c:
     scl: GPIO22
     scan: True
 
-dallas:
-  - pin: GPIO32 # grove port
+one_wire:
+  - platform: gpio
+    pin: GPIO32 # grove port
 
 sensor:
   - platform: uptime
@@ -75,19 +77,19 @@ sensor:
     name: "${friendly_name} WiFi Signal"
     update_interval: 60s
 
-  - platform: dallas
+  - platform: dallas_temp
     id: seedlings_air_temperature_sensor
     address: 0xec0301979421a028
     name: "Seedlings Air Temperature"
     unit_of_measurement: "°C"
 
-  - platform: dallas
+  - platform: dallas_temp
     id: seedlings_water_temperature_sensor
     address: 0xb4030a97945e8a28
     name: "Seedlings Water Temperature"
     unit_of_measurement: "°C"
 
-  - platform: dallas
+  - platform: dallas_temp
     id: seedlings_room_temperature_sensor
     address: 0xb40307979441e928
     name: "Seedlings Room Temperature"
