@@ -141,7 +141,7 @@ mqtt:
     payload: offline
   idf_send_async: true
   skip_cert_cn_check: false
-  <<: !include letsencrypt_chain.yaml
+  <<: !include common/letsencrypt_chain.yaml
 
 font:
   - file: 'fonts/OpenSans-Regular.ttf'

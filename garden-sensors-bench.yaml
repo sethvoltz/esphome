@@ -1,0 +1,67 @@
+substitutions:
+  device_name: garden-sensors-bench
+  device_id: garden_sensors_bench
+  friendly_name: Garden Sensors Bench
+  device_description: Depth and temperature sensors for hydroponic tanks
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: bus_a
+
+packages:
+  device_base: !include
+    file: common/device_base.yaml
+    vars:
+      encryption_key: !secret garden_sensors_api_key
+      ota_password: !secret garden_sensors_ota_password
+      wifi_ssid: !secret wifi_ssid
+      wifi_password: !secret wifi_password
+      fallback_hotspot_password: !secret garden_sensors_hotspot_password
+      mqtt_username: !secret garden_sensors_mqtt_username
+      mqtt_password: !secret garden_sensors_mqtt_password
+
+  tank_left: !include
+    file: tank-manager.yaml
+    vars:
+      tank_friendly_name: Tank Left
+      tank_id: tank_left
+      temperature_sensor_address: 0x5b030e979460de28
+      pump_1_pin: GPIO25
+      pump_2_pin: GPIO26
+      pump_3_pin: GPIO27
+      water_valve_pin: GPIO14
+      depth_multiplexer: 'A1_GND'
+
+  # tank_right: !include
+  #   file: tank-manager.yaml
+  #   vars:
+  #     tank_friendly_name: Tank Right
+  #     tank_id: tank_right
+  #     temperature_sensor_address: 0x2b03019794341228
+  #     pump_1_pin: GPIO19
+  #     pump_2_pin: GPIO18
+  #     pump_3_pin: GPIO17
+  #     water_valve_pin: GPIO16
+  #     depth_multiplexer: 'A0_GND'
+
+one_wire:
+  - platform: gpio
+    pin: GPIO23
+
+ads1115:
+  - address: 0x48
+
+sensor:
+  - platform: am2320
+    setup_priority: -100 # This sensor is slow to initialize
+    temperature:
+      name: "Garden Sensor Box Temperature"
+    humidity:
+      name: "Garden Sensor Box Humidity"

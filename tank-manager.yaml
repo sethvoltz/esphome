@@ -1,0 +1,228 @@
+# Required Vars:
+#   tank_friendly_name: Hydroponic Tank
+#   tank_id: tank_1
+#   temperature_sensor_address: 0x2b03019794341228
+#   pump_1_pin: GPIO1
+#   pump_2_pin: GPIO2
+#   pump_3_pin: GPIO3
+#   water_valve_pin: GPIO4
+#   depth_multiplexer: 'A0_GND'
+
+defaults:
+  low_water_mark: "15"
+  high_water_mark: "95"
+  low_water_delay_time: 300s
+  tank_offset_calibration: "-50.0"
+  tank_percent_calibration_low: "20.0"
+  tank_percent_calibration_high: "320.0"
+
+globals:
+  - id: ${tank_id}_filled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+sensor:
+  - platform: dallas_temp
+    address: ${temperature_sensor_address}
+    name: "${tank_friendly_name} Temperature"
+    unit_of_measurement: "°C"
+
+  - platform: ads1115
+    id: ${tank_id}_depth
+    multiplexer: ${depth_multiplexer}
+    gain: 2.048 # up to 2.048V
+    name: "${tank_friendly_name} Depth"
+    update_interval: 5s
+    unit_of_measurement: "mm"
+    filters:
+      # depth = ((voltage * to_mV / 120_ohm) - current_init_mA) * (range_mm / water_density / 16.0)
+      - lambda: return (((x * 1000.0 / 120.0) - 4.0) * (1000.0 / 1.0 / 16.0));
+      # offset is a calibration factor based on the voltage reference from crappy power supplies
+      - offset: ${tank_offset_calibration}
+
+  - platform: template
+    id: ${tank_id}_depth_percent
+    name: "${tank_friendly_name} Depth (%)"
+    update_interval: 5s
+    state_class: measurement
+    unit_of_measurement: "%"
+    lambda: |-
+      return id(${tank_id}_depth).state;
+    filters:
+      - calibrate_linear:
+        - ${tank_percent_calibration_low} -> 0.0
+        - ${tank_percent_calibration_high} -> 100.0
+      - clamp:
+          min_value: 0.0
+          max_value: 100.0
+
+switch:
+  - platform: gpio
+    pin: ${water_valve_pin}
+    name: "${tank_friendly_name} Water Valve"
+    id: ${tank_id}_water_valve
+
+  - platform: gpio
+    pin: ${pump_1_pin}
+    name: "${tank_friendly_name} Dosing Pump 1"
+    id: ${tank_id}_pump_1
+
+  - platform: gpio
+    pin: ${pump_2_pin}
+    name: "${tank_friendly_name} Dosing Pump 2"
+    id: ${tank_id}_pump_2
+
+  - platform: gpio
+    pin: ${pump_3_pin}
+    name: "${tank_friendly_name} Dosing Pump 3"
+    id: ${tank_id}_pump_3
+
+binary_sensor:
+  - platform: template
+    name: "${tank_friendly_name} Water Level Below Low Set"
+    id: ${tank_id}_water_below_low_set
+    lambda: |-
+      if (id(${tank_id}_depth_percent).state < id(${tank_id}_low_water_mark).state) {
+        return true;
+      } else {
+        return false;
+      }
+    filters:
+      - delayed_on: !lambda "return id(${tank_id}_delay_time).state;"
+
+interval:
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            - binary_sensor.is_on: ${tank_id}_water_below_low_set
+          then:
+            - script.execute: start_${tank_id}_filling
+          else:
+            - script.execute: check_for_${tank_id}_full
+    startup_delay: 30s
+
+number:
+  - platform: template
+    name: "${tank_friendly_name} Low Water Mark"
+    id: ${tank_id}_low_water_mark
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 100
+    step: 1
+    unit_of_measurement: "%"
+    initial_value: 15
+
+  - platform: template
+    name: "${tank_friendly_name} High Water Mark"
+    id: ${tank_id}_high_water_mark
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 100
+    step: 1
+    unit_of_measurement: "%"
+    initial_value: 95
+
+  - platform: template
+    name: "${tank_friendly_name} Delay Time"
+    id: ${tank_id}_delay_time
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 1
+    max_value: 600
+    step: 1
+    unit_of_measurement: s
+    initial_value: 300
+
+  - platform: template
+    name: "${tank_friendly_name} Pump 1 Run Time"
+    id: ${tank_id}_pump_1_run_time
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 100
+    max_value: 20000
+    step: 100
+    unit_of_measurement: ms
+    initial_value: 5000
+
+  - platform: template
+    name: "${tank_friendly_name} Pump 2 Run Time"
+    id: ${tank_id}_pump_2_run_time
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 100
+    max_value: 20000
+    step: 100
+    unit_of_measurement: ms
+    initial_value: 5000
+
+  - platform: template
+    name: "${tank_friendly_name} Pump 3 Run Time"
+    id: ${tank_id}_pump_3_run_time
+    entity_category: config
+    optimistic: true
+    restore_value: true
+    min_value: 100
+    max_value: 20000
+    step: 100
+    unit_of_measurement: ms
+    initial_value: 5000
+
+script:
+  - id: start_${tank_id}_filling
+    mode: restart
+    then:
+      - switch.turn_on: ${tank_id}_water_valve
+      - globals.set:
+          id: ${tank_id}_filled
+          value: 'false'
+
+  - id: check_for_${tank_id}_full
+    mode: restart
+    then:
+      - lambda: |-
+          if (id(${tank_id}_depth).state > id(${tank_id}_high_water_mark).state) {
+            id(${tank_id}_water_valve).turn_off();
+            if (!id(${tank_id}_filled)) {
+              id(trigger_${tank_id}_dosing).execute();
+            }
+          }
+
+  - id: trigger_${tank_id}_dosing
+    mode: restart
+    then:
+      - globals.set:
+          id: ${tank_id}_filled
+          value: 'true'
+      - script.execute: run_${tank_id}_pump_1
+      - script.execute: run_${tank_id}_pump_1
+      - script.execute: run_${tank_id}_pump_1
+
+  - id: run_${tank_id}_pump_1
+    mode: parallel
+    then:
+      - switch.turn_on: ${tank_id}_pump_1
+      - delay: !lambda "return id(${tank_id}_pump_1_run_time).state;"
+      - switch.turn_off: ${tank_id}_pump_1
+
+  - id: run_${tank_id}_pump_2
+    mode: parallel
+    then:
+      - switch.turn_on: ${tank_id}_pump_2
+      - delay: !lambda "return id(${tank_id}_pump_2_run_time).state;"
+      - switch.turn_off: ${tank_id}_pump_2
+
+  - id: run_${tank_id}_pump_3
+    mode: parallel
+    then:
+      - switch.turn_on: ${tank_id}_pump_3
+      - delay: !lambda "return id(${tank_id}_pump_3_run_time).state;"
+      - switch.turn_off: ${tank_id}_pump_3

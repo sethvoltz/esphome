@@ -1,0 +1,50 @@
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+  comment: ${device_description}
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: ${encryption_key}
+
+ota:
+  platform: esphome
+  password: ${ota_password}
+
+wifi:
+  ssid: ${wifi_ssid}
+  password: ${wifi_password}
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ${friendly_name} Fallback
+    password: ${fallback_hotspot_password}
+
+captive_portal:
+
+sensor:
+  - platform: uptime
+    name: "${friendly_name} Uptime"
+
+  - platform: wifi_signal
+    name: "${friendly_name} WiFi Signal"
+    update_interval: 60s
+
+mqtt:
+  broker: !secret mqtt_broker
+  port: !secret mqtt_port
+  username: ${mqtt_username}
+  password: ${mqtt_password}
+  birth_message:
+    topic: garden-sensors/status
+    payload: online
+  will_message:
+    topic: garden-sensors/status
+    payload: offline
+  idf_send_async: true
+  skip_cert_cn_check: false
+  <<: !include letsencrypt_chain.yaml
