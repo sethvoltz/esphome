@@ -10,8 +10,8 @@ esp32:
     type: esp-idf
 
 i2c:
-  sda: 21
-  scl: 22
+  sda: GPIO21
+  scl: GPIO22
   scan: true
   id: bus_a
 
@@ -38,7 +38,7 @@ packages:
       pump_3_pin: GPIO27
       water_valve_pin: GPIO14
       depth_multiplexer: 'A1_GND'
-
+  
   # tank_right: !include
   #   file: tank-manager.yaml
   #   vars:
@@ -50,6 +50,22 @@ packages:
   #     pump_3_pin: GPIO17
   #     water_valve_pin: GPIO16
   #     depth_multiplexer: 'A0_GND'
+
+  fan_left: !include
+    file: fan_manager.yaml
+    vars:
+      fan_friendly_name: Fan Left
+      fan_id: fan_left
+      tachometer_pin: GPIO4
+      fan_pwm_pin: GPIO33
+  
+  # fan_right: !include
+  #   file: fan_manager.yaml
+  #   vars:
+  #     fan_friendly_name: Fan Right
+  #     fan_id: fan_right
+  #     tachometer_pin: GPIO2
+  #     fan_pwm_pin: GPIO15
 
 one_wire:
   - platform: gpio

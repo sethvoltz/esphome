@@ -108,6 +108,7 @@ number:
     name: "${tank_friendly_name} Low Water Mark"
     id: ${tank_id}_low_water_mark
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 1
@@ -120,6 +121,7 @@ number:
     name: "${tank_friendly_name} High Water Mark"
     id: ${tank_id}_high_water_mark
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 1
@@ -132,6 +134,7 @@ number:
     name: "${tank_friendly_name} Delay Time"
     id: ${tank_id}_delay_time
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 1
@@ -144,6 +147,7 @@ number:
     name: "${tank_friendly_name} Pump 1 Run Time"
     id: ${tank_id}_pump_1_run_time
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 100
@@ -156,6 +160,7 @@ number:
     name: "${tank_friendly_name} Pump 2 Run Time"
     id: ${tank_id}_pump_2_run_time
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 100
@@ -168,6 +173,7 @@ number:
     name: "${tank_friendly_name} Pump 3 Run Time"
     id: ${tank_id}_pump_3_run_time
     entity_category: config
+    mode: box
     optimistic: true
     restore_value: true
     min_value: 100

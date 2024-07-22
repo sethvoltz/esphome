@@ -1,0 +1,57 @@
+# Required Vars:
+#   fan_friendly_name: Fan 1
+#   fan_id: fan_1
+#   tachometer_pin: GPIO1
+#   fan_pwm_pin: GPIO2
+
+defaults:
+  fan_tachometer_multiplier: "0.5"
+
+sensor:
+  - platform: pulse_counter
+    name: "${fan_friendly_name} RPM"
+    id: ${fan_id}_rpm
+    pin:
+      number: ${tachometer_pin}
+      mode: INPUT_PULLUP
+    unit_of_measurement: "RPM"
+    accuracy_decimals: 0
+    update_interval: 1s # Makes the RPM update every seccond. Will default to once every minute if removed
+    filters:
+      - multiply: ${fan_tachometer_multiplier} # (2 pulses per revolution)
+  
+  # Every time the fan speed is updated, this sensor will
+  # also be updated for displaying on the frontend. 
+  - platform: template
+    name: "${fan_friendly_name} (PWM Voltage)"
+    unit_of_measurement: "%"
+    id: ${fan_id}_pwm_voltage
+
+# Fan output
+output:
+  - id: ${fan_id}_output
+    platform: ledc
+    pin: ${fan_pwm_pin}
+    frequency: 25000Hz
+
+    min_power: 0%
+    max_power: 80%
+
+    # At 0, actually turn it off, otherwise the power keeps going.
+    zero_means_zero: true
+  
+  - platform: template
+    id: ${fan_id}_proxy_output
+    type: float
+    write_action:
+      lambda: |-
+        id(${fan_id}_output).set_level(state);
+        id(${fan_id}_pwm_voltage).publish_state(state * 100.0);
+
+
+# Fan configuration
+fan:
+  - platform: speed
+    id: ${fan_id}_control
+    output: ${fan_id}_proxy_output
+    name: ${fan_friendly_name}
